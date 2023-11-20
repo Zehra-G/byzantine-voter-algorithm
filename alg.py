@@ -15,11 +15,34 @@ from collections import defaultdict
 import random
 
 class Node:
-    def __init__(self, node_id, total_nodes, rankings):
+    def __init__(self, node_id, total_nodes):
+        
+        #ID for individual node
         self.node_id = node_id
+        #Number of total nodes 
         self.total_nodes = total_nodes
-        self.rankings = rankings
+        #Rankings for the individual node
+        self.rankings = None
         self.fixed_pairs = set()
+
+
+    def rankings(self,canidatesnum ):
+        #This function determines the rankings for all the nodes
+
+        #Empty list of the prefrences of the node 
+        prefrences = []
+        
+        #Create a list of all the canidates
+        for i in range(canidatesnum):
+            prefrences.append(i)
+        #Create a random ordering of the canidates for each node
+        for i in range(canidatesnum):
+            self.rankings.append(random.choice(prefrences))
+        return self.rankings
+
+        
+
+        
 
     def broadcast_ranking(self):
         return self.rankings
@@ -69,38 +92,38 @@ class Node:
         if all(pair in self.fixed_pairs for pair in dictator_ranking):
             self.rankings = dictator_ranking
 
-def consensus_algorithm(nodes, rounds):
-    for round_number in range(rounds):
-        # Select t + 1 different nodes as dictators for the round
-        round_dictators = random.sample(nodes, len(nodes[0].fixed_pairs) + 1)
+class Algorithm:
 
-        for node in nodes:
+    def __init__(self,numcanidates):
+
+        self.numcanidates = numcanidates
+
+
+
+    def determine_rankings(self,nodes):
+        #Nodes is a list of all nodes that we are running the algorithm on
+        
+        for i in range(len(nodes)):
+            node = nodes[i]
+            node.rankings(self.numcanidates)
+
+
+    def consensus_algorithm(nodes, rounds):
+        for round_number in range(rounds):
+            # Select t + 1 different nodes as dictators for the round
+            round_dictators = random.sample(nodes, len(nodes[0].fixed_pairs) + 1)
+
+            for node in nodes:
             # Communication Phase
-            node.broadcast_ranking()
-            proposals = node.propose_pairs(node.rankings)
-            node.receive_proposal(proposals)
+                node.broadcast_ranking()
+                proposals = node.propose_pairs(node.rankings)
+                node.receive_proposal(proposals)
 
             # Dictator Phase
-            dictator_ranking = round_dictators[round_number].broadcast_ranking()
-            node.dictator_phase(dictator_ranking)
+                dictator_ranking = round_dictators[round_number].broadcast_ranking()
+                node.dictator_phase(dictator_ranking)
 
             # Decision Phase
-            node.decision_phase(dictator_ranking)
+                node.decision_phase(dictator_ranking)
 
-    return [node.rankings for node in nodes]
-
-# Example usage:
-total_nodes = 4
-threshold = 1  # Adjust as needed
-rounds = 5
-
-nodes = [Node(node_id=i, total_nodes=total_nodes, rankings=['A', 'B', 'C']) for i in range(total_nodes)]
-
-for node in nodes:
-    node.threshold = threshold
-
-consensus_rankings = consensus_algorithm(nodes, rounds)
-
-print("Consensus Rankings:")
-for i, rankings in enumerate(consensus_rankings):
-    print(f"Node {i}: {rankings}")
+        return [node.rankings for node in nodes]
